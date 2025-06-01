@@ -1,67 +1,72 @@
 function init() {
-    const w = 900; // Wider width
-    const h = 400; // Taller height
-    const barPadding = 5;
+    const w = 600;
+    const h = 400;
+    const padding = 70;
 
-    d3.csv("OECD Dataset.csv").then(function(data) {
-        const dataset = data.map(d => ({
-            year: +d.Year,
-            country: d.Country,
-            rate: +d.Rate
-        }));
+    const svg = d3.select("#chart")
+        .append("svg")
+        .attr("width", w)
+        .attr("height", h);
 
-        const svg = d3.select("#chart")
-            .append("svg")
-            .attr("width", w)
-            .attr("height", h);
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip");
+
+    d3.csv("OECD Dataset.csv").then(data => {
+        data.forEach(d => {
+            d.Year = +d.Year;
+            d.Rate = +d.Rate;
+        });
 
         const xScale = d3.scaleBand()
-            .domain(dataset.map((d, i) => i))
-            .range([0, w])
+            .domain(data.map(d => d.Country + " " + d.Year))
+            .range([padding, w - padding])
             .padding(0.1);
 
         const yScale = d3.scaleLinear()
-            .domain([0, d3.max(dataset, d => d.rate)])
-            .nice()
-            .range([h - 40, 20]); // leave room for text above bars
+            .domain([0, d3.max(data, d => d.Rate)])
+            .range([h - padding, padding]);
 
-        // Add bars
-        svg.selectAll("rect")
-            .data(dataset)
+        svg.selectAll(".bar")
+            .data(data)
             .enter()
             .append("rect")
-            .attr("x", (d, i) => xScale(i))
-            .attr("y", d => yScale(d.rate))
+            .attr("class", "bar")
+            .attr("x", d => xScale(d.Country + " " + d.Year))
+            .attr("y", d => yScale(d.Rate))
             .attr("width", xScale.bandwidth())
-            .attr("height", d => h - 40 - yScale(d.rate))
-            .attr("fill", d => d.country === "Australia" ? "steelblue" : "tomato");
+            .attr("height", d => h - padding - yScale(d.Rate))
+            .attr("fill", "steelblue")
+            .on("mouseover", function(event, d) {
+                tooltip.transition().duration(200).style("opacity", 0.9);
+                tooltip.html(`Country: ${d.Country}<br>Year: ${d.Year}<br>Rate: ${d.Rate}%`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+                d3.select(this).attr("fill", "orange");
+            })
+            .on("mouseout", function() {
+                tooltip.transition().duration(500).style("opacity", 0);
+                d3.select(this).attr("fill", "steelblue");
+            });
 
-        // Add values on bars
-        svg.selectAll("text.values")
-            .data(dataset)
-            .enter()
-            .append("text")
-            .attr("class", "values")
-            .text(d => d.rate)
-            .attr("x", (d, i) => xScale(i) + xScale.bandwidth() / 2)
-            .attr("y", d => yScale(d.rate) - 8)
-            .attr("text-anchor", "middle")
-            .attr("font-size", "12px")
-            .attr("fill", "#000");
+        const xAxis = d3.axisBottom(xScale)
+            .tickFormat(d => d.replace(/\s\d+$/, ""));  // Fix: show full country name
 
-        // Add labels (year)
-        svg.selectAll("text.labels")
-            .data(dataset)
-            .enter()
-            .append("text")
-            .attr("class", "labels")
-            .text(d => `${d.year} (${d.country === "Australia" ? "AUS" : "US"})`)
-            .attr("x", (d, i) => xScale(i) + xScale.bandwidth() / 2)
-            .attr("y", h - 20)
-            .attr("text-anchor", "middle")
-            .attr("font-size", "11px")
-            .attr("fill", "#333");
+        const yAxis = d3.axisLeft(yScale);
+
+        svg.append("g")
+            .attr("transform", `translate(0, ${h - padding})`)
+            .call(xAxis)
+            .selectAll("text")
+            .attr("transform", "rotate(-45)")
+            .style("text-anchor", "end");
+
+        svg.append("g")
+            .attr("transform", `translate(${padding}, 0)`)
+            .call(yAxis);
+    }).catch(error => {
+        console.error("Error loading CSV:", error);
     });
 }
 
 window.onload = init;
+
