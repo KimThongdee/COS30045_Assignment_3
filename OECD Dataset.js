@@ -1,6 +1,6 @@
 function loadChart() {
     const chartDiv = document.getElementById("chart");
-    chartDiv.innerHTML = ""; // Clear any existing SVG
+    chartDiv.innerHTML = "";
 
     const w = 600;
     const h = 400;
@@ -52,7 +52,7 @@ function loadChart() {
             });
 
         const xAxis = d3.axisBottom(xScale)
-            .tickFormat(d => d.replace(/\s\d+$/, ""));  // Show only country name
+            .tickFormat(d => d.replace(/\s\d+$/, ""));
 
         const yAxis = d3.axisLeft(yScale);
 
@@ -71,7 +71,6 @@ function loadChart() {
     });
 }
 
-// Toggle functions
 function showImage() {
     document.getElementById("imageContainer").style.display = "block";
     document.getElementById("chart").style.display = "none";
