@@ -1,34 +1,41 @@
 function loadChart() {
     const chartDiv = document.getElementById("chart");
     chartDiv.innerHTML = "";
-
+    
+    //Set up dimensions
     const w = 600;
     const h = 400;
     const padding = 70;
 
+    //Create SVG
     const svg = d3.select("#chart")
         .append("svg")
         .attr("width", w)
         .attr("height", h);
 
+    //Tooltip setup
     const tooltip = d3.select("body").append("div")
         .attr("class", "tooltip");
 
+    //Load and process CSV data
     d3.csv("OECD Dataset.csv").then(data => {
         data.forEach(d => {
             d.Year = +d.Year;
             d.Rate = +d.Rate;
         });
 
+        //Scales xScale (categorical: country + year)
         const xScale = d3.scaleBand()
             .domain(data.map(d => d.Country + " " + d.Year))
             .range([padding, w - padding])
             .padding(0.1);
 
+        //yScale (numeric: unemployment rate)
         const yScale = d3.scaleLinear()
             .domain([0, d3.max(data, d => d.Rate)])
             .range([h - padding, padding]);
 
+        //Draw bars, Hover interaction
         svg.selectAll(".bar")
             .data(data)
             .enter()
@@ -51,6 +58,7 @@ function loadChart() {
                 d3.select(this).attr("fill", "steelblue");
             });
 
+        //Axes
         const xAxis = d3.axisBottom(xScale)
             .tickFormat(d => d.replace(/\s\d+$/, ""));
 
